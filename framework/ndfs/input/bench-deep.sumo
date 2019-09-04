@@ -1,0 +1,29 @@
+short x;
+short y;
+short maxXX = 1024;
+short maxYY = 1024;
+short noCycleMax = maxXX + maxYY - 2;
+
+/* When max is made lower than noCycleMax, there is an accepting state with a loop. */
+short max = noCycleMax;
+
+active proctype monitor()
+{
+    /* blocking condition. */
+	x + y == max + 1;
+    accept_leaf: goto accept_leaf;
+}
+
+active proctype X() 
+{
+    do
+    ::  x = (x+1) % maxXX;
+    od;
+}
+
+active proctype Y() 
+{
+    do
+    ::  y = (y+1) % maxYY;
+    od;
+}

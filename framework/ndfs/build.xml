@@ -1,0 +1,57 @@
+<project name="ndfs" basedir="." default="jar">
+
+	<!-- properties for this project -->
+	<property name="src.dir" value="src" />
+
+	<property name="build.dir" value="build" />
+	<property name="classes.dir" value="${build.dir}/classes" />
+	<property name="jar.dir" value="${build.dir}/jar" />
+	<property name="lib.dir" value="lib" />
+	<property name="javadoc.dir" value="javadoc" />
+
+	<!-- classpath properties -->
+	<path id="classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<!-- targets -->
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<delete dir="${javadoc.dir}" />
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${classes.dir}" />
+		<javac includeantruntime="false" srcdir="${src.dir}" destdir="${classes.dir}"
+			debug="on" debuglevel="lines,vars,source" classpathref="classpath">
+		</javac>
+	</target>
+
+	<target name="javadoc" description="Create javadoc">
+		<!-- Create the javadoc directory -->
+		<delete dir="${javadoc.dir}" />
+		<mkdir dir="${javadoc.dir}" />
+		<javadoc destdir="${javadoc.dir}" access="public" sourcepath="src"
+			windowtitle="NDFS Documentation" overview="src/overview.html" classpathref="classpath"
+			doctitle="NDFS Documentation" bottom="The NDFS programming assignment">
+		</javadoc>
+
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="${jar.dir}" />
+		<jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+		</jar>
+	</target>
+
+    <target name="submit" description="Create zipfile to submit">
+        <zip destfile="submit.zip">
+            <zipfileset dir="src" includes="**/*.java"/>
+            <zipfileset dir="report" includes="*.pdf"/>
+        </zip>
+    </target>
+
+	<target name="clean-build" depends="clean,jar" />
+</project>

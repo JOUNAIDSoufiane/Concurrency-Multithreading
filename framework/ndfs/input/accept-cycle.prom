@@ -1,0 +1,12 @@
+/* An accepting cycle after 10 increments of c */
+
+int c = 0;
+
+init {
+	do
+	:: c < 10 -> c++
+	:: else -> break
+	od
+
+	accept: goto accept
+}
