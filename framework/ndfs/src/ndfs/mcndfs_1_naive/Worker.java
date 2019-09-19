@@ -38,29 +38,35 @@ public class Worker {
     }
 
     private void dfsRed(State s) throws CycleFoundException {
-
+        // s.pink = true
         for (State t : graph.post(s)) {
             if (colors.hasColor(t, Color.CYAN)) {
                 throw new CycleFoundException();
-            } else if (colors.hasColor(t, Color.BLUE)) {
-                colors.color(t, Color.RED);
+            } else if (colors.hasColor(t, Color.BLUE)) { // if (!s.pink & !(sharedColors.hasColor(t, Color.RED)) )
+                colors.color(t, Color.RED);              //     dfsRed(t)
                 dfsRed(t);
             }
         }
+        // if (s.isAccepting())
+        //      s.count = s.count - 1  this is a shared variable and needs to be protected from concurrent access
+        //      await s.count == 0
+        // sharedColors.color(s,Color.RED)
+        // s.pink = false
     }
 
     private void dfsBlue(State s) throws CycleFoundException {
 
         colors.color(s, Color.CYAN);
         for (State t : graph.post(s)) {
-            if (colors.hasColor(t, Color.WHITE)) {
+            if (colors.hasColor(t, Color.WHITE)) { // if(colors.hasColor(t, Color.WHITE) & (!(sharedColors.hasColor(t, Color.RED))) shared colors needs to be a shared Colors object between threads
                 dfsBlue(t);
             }
         }
         if (s.isAccepting()) {
+            // s.count = s.count + 1, this is a shared variable and needs to be protected from concurrent access
             dfsRed(s);
             colors.color(s, Color.RED);
-        } else {
+        } else { // else statement to be removed
             colors.color(s, Color.BLUE);
         }
     }
