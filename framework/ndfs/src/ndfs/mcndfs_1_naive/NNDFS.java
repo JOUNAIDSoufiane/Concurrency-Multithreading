@@ -11,7 +11,8 @@ import ndfs.NDFS;
  */
 public class NNDFS implements NDFS {
 
-    private final Worker worker;
+    private final Thread[] threads;
+    private final Worker[] workers;
 
     private static Colors sharedColors = new Colors();
 
@@ -24,13 +25,26 @@ public class NNDFS implements NDFS {
      * @throws FileNotFoundException
      *             is thrown in case the file could not be read.
      */
-    public NNDFS(File promelaFile) throws FileNotFoundException {
-        this.worker = new Worker(promelaFile, sharedColors);
+    public NNDFS(File promelaFile, int nrWorkers) throws FileNotFoundException {
+        workers = new Worker[nrWorkers];
+        threads = new Thread[nrWorkers];
+        for (int i = 0; i < nrWorkers; i++) {
+            workers[i] = new Worker(promelaFile, sharedColors);
+            threads[i] = new Thread(workers[i]);
+            System.out.println("HERE");
+        }
     }
 
     @Override
     public boolean ndfs() {
-        worker.run();
-        return worker.getResult();
+        for (Thread t: threads) {
+            t.start();
+        }
+
+        for (int i = 0; i < workers.length; i++) {
+            if (workers[i].getResult())
+                return true;
+        }
+        return false;
     }
 }

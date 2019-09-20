@@ -5,12 +5,12 @@ import java.util.Map;
 
 import graph.State;
 
-public class StateCount{
+public class StateCount{ // Singleton class, to be used as a shared object
 
     private static StateCount singleInstance = new StateCount();
     private static final Map<State, Integer> map = new HashMap<State, Integer>();
 
-    public StateCount getInstance(){
+    public static StateCount getInstance(){
         return singleInstance;
     }
 

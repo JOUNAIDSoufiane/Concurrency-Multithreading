@@ -12,14 +12,13 @@ import graph.State;
  * <a href="http://www.cs.vu.nl/~tcs/cm/ndfs/laarman.pdf"> "the Laarman
  * paper"</a>.
  */
-public class Worker {
+public class Worker implements Runnable {
 
     private final Graph graph;
     private final Colors colors = new Colors();
     private boolean result = false;
 
     private static Colors sharedColors;
-    private static StateCount stateCount;
 
     // Throwing an exception is a convenient way to cut off the search in case a
     // cycle is found.
@@ -39,7 +38,7 @@ public class Worker {
 
         this.graph = GraphFactory.createGraph(promelaFile);
         this.sharedColors = sharedColors;
-        this.stateCount = stateCount.getInstance();
+
     }
 
     private void dfsRed(State s) throws CycleFoundException {
@@ -63,12 +62,12 @@ public class Worker {
 
         colors.color(s, Color.CYAN);
         for (State t : graph.post(s)) {
-            if (colors.hasColor(t, Color.WHITE) && (!sharedColors.hasColor(t, Color.RED)) ) {
+            if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(s)) ) {
                 dfsBlue(t);
             }
         }
         if (s.isAccepting()) {
-            stateCount.countIncrement(s);
+            StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
             dfsRed(s);
         }
         colors.color(s, Color.BLUE);
