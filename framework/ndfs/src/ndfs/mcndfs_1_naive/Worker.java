@@ -18,6 +18,9 @@ public class Worker {
     private final Colors colors = new Colors();
     private boolean result = false;
 
+    private static Colors sharedColors;
+    private static StateCount stateCount;
+
     // Throwing an exception is a convenient way to cut off the search in case a
     // cycle is found.
     private static class CycleFoundException extends Exception {
@@ -32,9 +35,11 @@ public class Worker {
      * @throws FileNotFoundException
      *             is thrown in case the file could not be read.
      */
-    public Worker(File promelaFile) throws FileNotFoundException {
+    public Worker(File promelaFile, Colors sharedColors) throws FileNotFoundException {
 
         this.graph = GraphFactory.createGraph(promelaFile);
+        this.sharedColors = sharedColors;
+        this.stateCount = stateCount.getInstance();
     }
 
     private void dfsRed(State s) throws CycleFoundException {
@@ -58,17 +63,15 @@ public class Worker {
 
         colors.color(s, Color.CYAN);
         for (State t : graph.post(s)) {
-            if (colors.hasColor(t, Color.WHITE)) { // if(colors.hasColor(t, Color.WHITE) & (!(sharedColors.hasColor(t, Color.RED))) shared colors needs to be a shared Colors object between threads
+            if (colors.hasColor(t, Color.WHITE) && (!sharedColors.hasColor(t, Color.RED)) ) {
                 dfsBlue(t);
             }
         }
         if (s.isAccepting()) {
-            // s.count = s.count + 1, this is a shared variable and needs to be protected from concurrent access
+            stateCount.countIncrement(s);
             dfsRed(s);
-            colors.color(s, Color.RED);
-        } else { // else statement to be removed
-            colors.color(s, Color.BLUE);
         }
+        colors.color(s, Color.BLUE);
     }
 
     private void nndfs(State s) throws CycleFoundException {

@@ -13,6 +13,9 @@ public class NNDFS implements NDFS {
 
     private final Worker worker;
 
+    private static Colors sharedColors = new Colors();
+
+
     /**
      * Constructs an NDFS object using the specified Promela file.
      *
@@ -22,8 +25,7 @@ public class NNDFS implements NDFS {
      *             is thrown in case the file could not be read.
      */
     public NNDFS(File promelaFile) throws FileNotFoundException {
-
-        this.worker = new Worker(promelaFile);
+        this.worker = new Worker(promelaFile, sharedColors);
     }
 
     @Override
