@@ -18,8 +18,6 @@ public class Worker implements Runnable {
     private final Colors colors = new Colors();
     private boolean result = false;
 
-    private static Colors sharedColors;
-
     // Throwing an exception is a convenient way to cut off the search in case a
     // cycle is found.
     private static class CycleFoundException extends Exception {
@@ -34,11 +32,9 @@ public class Worker implements Runnable {
      * @throws FileNotFoundException
      *             is thrown in case the file could not be read.
      */
-    public Worker(File promelaFile, Colors sharedColors) throws FileNotFoundException {
+    public Worker(File promelaFile) throws FileNotFoundException {
 
         this.graph = GraphFactory.createGraph(promelaFile);
-        this.sharedColors = sharedColors;
-
     }
 
     private void dfsRed(State s) throws CycleFoundException {

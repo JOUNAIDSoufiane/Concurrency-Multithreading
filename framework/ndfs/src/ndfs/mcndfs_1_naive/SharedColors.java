@@ -18,7 +18,7 @@ public class SharedColors {
         return map.get(s) != null;
     }
 
-    public boolean setRed(State s){
+    public void setRed(State s){
         map.put(s, true);
     }
 }

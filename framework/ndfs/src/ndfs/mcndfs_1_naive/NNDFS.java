@@ -14,9 +14,6 @@ public class NNDFS implements NDFS {
     private final Thread[] threads;
     private final Worker[] workers;
 
-    private static Colors sharedColors = new Colors();
-
-
     /**
      * Constructs an NDFS object using the specified Promela file.
      *
@@ -29,9 +26,8 @@ public class NNDFS implements NDFS {
         workers = new Worker[nrWorkers];
         threads = new Thread[nrWorkers];
         for (int i = 0; i < nrWorkers; i++) {
-            workers[i] = new Worker(promelaFile, sharedColors);
+            workers[i] = new Worker(promelaFile);
             threads[i] = new Thread(workers[i]);
-            System.out.println("HERE");
         }
     }
 
