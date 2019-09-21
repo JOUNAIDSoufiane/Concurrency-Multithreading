@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 /**
  * This is a straightforward implementation of Figure 1 of
  * <a href="http://www.cs.vu.nl/~tcs/cm/ndfs/laarman.pdf"> "the Laarman
@@ -20,9 +23,13 @@ public class Worker implements Runnable {
 
     private final Graph graph;
     private final Colors colors = new Colors();
+
     private boolean result = false;
+
     private int nrThreads;
     private int nrWorker;
+
+    private ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     private final Map<State,Boolean> pinkMap = new HashMap<State, Boolean>();
 
@@ -48,35 +55,48 @@ public class Worker implements Runnable {
     }
 
     private void dfsRed(State s) throws CycleFoundException {
+//        System.out.println( "Thread "+ nrWorker +" current state in dfs red : " + s);
         pinkMap.put(s, true);
+        //  Post permuation
         List<State> list = graph.post(s);
         for (int i = nrWorker; i < list.size(); i += nrThreads) {
+//            System.out.println( "Thread "+ nrWorker +" state returned dfs red : " + list.get(i));
             if (colors.hasColor(list.get(i), Color.CYAN)) {
                 throw new CycleFoundException();
             } else if (pinkMap.get(s) == null && !SharedColors.getInstance().isRed(s) ) {
+//                System.out.println( "Thread "+ nrWorker +" initiating dfs red on succesor : " + list.get(i));
                 dfsRed(list.get(i));
             }
         }
          if (s.isAccepting()){
+              readWriteLock.writeLock().lock();
               StateCount.getInstance().countDecrement(s); // Critical section
+              readWriteLock.writeLock().unlock();
               while (!StateCount.getInstance().isZero(s)) {}
          }
-        SharedColors.getInstance().setRed(s);
-        pinkMap.remove(s);
+//         System.out.println( "Thread "+ nrWorker +" colored red state : " + s);
+         SharedColors.getInstance().setRed(s);
+         pinkMap.remove(s);
+//         System.out.println( "Thread "+ nrWorker +" leaving dfs red from " + s);
     }
 
     private void dfsBlue(State s) throws CycleFoundException {
-
+//        System.out.println( "Thread "+ nrWorker +" current state in dfs blue : " + s);
         colors.color(s, Color.CYAN);
+        //  Post permuation
         List<State> list = graph.post(s);
-        for (int i = nrWorker; i < list.size(); i = i + nrThreads) {
-            //System.out.println( "Thread "+ threadnumber +" state returned : " + s);
+        for (int i = nrWorker; i < list.size(); i += nrThreads) { // i += nrThreads skips succesors on backtracking
             if (colors.hasColor(list.get(i), Color.WHITE) && (!SharedColors.getInstance().isRed(s)) ) {
+//                System.out.println( "Thread "+ nrWorker +" initiating dfs blue on succesor : " + list.get(i));
                 dfsBlue(list.get(i));
+//                System.out.println( "Thread "+ nrWorker +" backtracking from : " + list.get(i));
             }
         }
         if (s.isAccepting()) {
+            readWriteLock.writeLock().lock();
             StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
+            readWriteLock.writeLock().unlock();
+//            System.out.println( "Thread "+ nrWorker +" initiating dfs red on " + s);
             dfsRed(s);
         }
         colors.color(s, Color.BLUE);
