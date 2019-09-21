@@ -26,7 +26,7 @@ public class NNDFS implements NDFS {
         workers = new Worker[nrWorkers];
         threads = new Thread[nrWorkers];
         for (int i = 0; i < nrWorkers; i++) {
-            workers[i] = new Worker(promelaFile,i);
+            workers[i] = new Worker(promelaFile, nrWorkers, i);
             threads[i] = new Thread(workers[i]);
         }
     }

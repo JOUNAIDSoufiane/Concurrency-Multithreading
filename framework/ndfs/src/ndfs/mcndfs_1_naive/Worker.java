@@ -8,6 +8,7 @@ import graph.GraphFactory;
 import graph.State;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,8 +20,9 @@ public class Worker implements Runnable {
 
     private final Graph graph;
     private final Colors colors = new Colors();
-    private final int threadnumber;
     private boolean result = false;
+    private int nrThreads;
+    private int nrWorker;
 
     private final Map<State,Boolean> pinkMap = new HashMap<State, Boolean>();
 
@@ -38,19 +40,21 @@ public class Worker implements Runnable {
      * @throws FileNotFoundException
      *             is thrown in case the file could not be read.
      */
-    public Worker(File promelaFile, int i) throws FileNotFoundException {
+    public Worker(File promelaFile, int nrThreads, int nrWorker) throws FileNotFoundException {
 
         this.graph = GraphFactory.createGraph(promelaFile);
-        this.threadnumber = i;
+        this.nrThreads = nrThreads;
+        this.nrWorker = nrWorker;
     }
 
     private void dfsRed(State s) throws CycleFoundException {
         pinkMap.put(s, true);
-        for (State t : graph.post(s)) {
-            if (colors.hasColor(t, Color.CYAN)) {
+        List<State> list = graph.post(s);
+        for (int i = nrWorker; i < list.size(); i += nrThreads) {
+            if (colors.hasColor(list.get(i), Color.CYAN)) {
                 throw new CycleFoundException();
             } else if (pinkMap.get(s) == null && !SharedColors.getInstance().isRed(s) ) {
-                dfsRed(t);
+                dfsRed(list.get(i));
             }
         }
          if (s.isAccepting()){
@@ -64,10 +68,11 @@ public class Worker implements Runnable {
     private void dfsBlue(State s) throws CycleFoundException {
 
         colors.color(s, Color.CYAN);
-        for (State t : graph.post(s)) {
+        List<State> list = graph.post(s);
+        for (int i = nrWorker; i < list.size(); i = i + nrThreads) {
             //System.out.println( "Thread "+ threadnumber +" state returned : " + s);
-            if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(s)) ) {
-                dfsBlue(t);
+            if (colors.hasColor(list.get(i), Color.WHITE) && (!SharedColors.getInstance().isRed(s)) ) {
+                dfsBlue(list.get(i));
             }
         }
         if (s.isAccepting()) {
