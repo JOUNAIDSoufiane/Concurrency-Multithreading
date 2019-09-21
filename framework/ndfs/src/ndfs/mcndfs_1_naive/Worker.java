@@ -53,9 +53,7 @@ public class Worker implements Runnable {
         }
          if (s.isAccepting()){
               StateCount.getInstance().countDecrement(s); // Critical section
-              while (!StateCount.getInstance().isZero(s)){
-
-             }
+              while (!StateCount.getInstance().isZero(s)) {}
          }
         SharedColors.getInstance().setRed(s);
         pinkMap.remove(s);
@@ -70,7 +68,6 @@ public class Worker implements Runnable {
             }
         }
         if (s.isAccepting()) {
-            System.out.print("bad things can happen now");
             StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
             dfsRed(s);
         }
