@@ -7,6 +7,9 @@ import graph.Graph;
 import graph.GraphFactory;
 import graph.State;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This is a straightforward implementation of Figure 1 of
  * <a href="http://www.cs.vu.nl/~tcs/cm/ndfs/laarman.pdf"> "the Laarman
@@ -17,6 +20,8 @@ public class Worker implements Runnable {
     private final Graph graph;
     private final Colors colors = new Colors();
     private boolean result = false;
+
+    private final Map<State,Boolean> pinkMap = new HashMap<State, Boolean>();
 
     // Throwing an exception is a convenient way to cut off the search in case a
     // cycle is found.
@@ -38,20 +43,22 @@ public class Worker implements Runnable {
     }
 
     private void dfsRed(State s) throws CycleFoundException {
-        // s.pink = true
+        pinkMap.put(s, true);
         for (State t : graph.post(s)) {
             if (colors.hasColor(t, Color.CYAN)) {
                 throw new CycleFoundException();
-            } else if (colors.hasColor(t, Color.BLUE)) { // if (!s.pink & !(sharedColors.hasColor(t, Color.RED)) )
-                colors.color(t, Color.RED);              //     dfsRed(t)
+            } else if (pinkMap.get(s) == null && !SharedColors.getInstance().isRed(s) ) {
                 dfsRed(t);
             }
         }
-        // if (s.isAccepting())
-        //      s.count = s.count - 1  this is a shared variable and needs to be protected from concurrent access
-        //      await s.count == 0
-        // sharedColors.color(s,Color.RED)
-        // s.pink = false
+         if (s.isAccepting()){
+              StateCount.getInstance().countDecrement(s); // Critical section
+              while (!StateCount.getInstance().isZero(s)){
+
+             }
+         }
+        SharedColors.getInstance().setRed(s);
+        pinkMap.remove(s);
     }
 
     private void dfsBlue(State s) throws CycleFoundException {
@@ -63,6 +70,7 @@ public class Worker implements Runnable {
             }
         }
         if (s.isAccepting()) {
+            System.out.print("bad things can happen now");
             StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
             dfsRed(s);
         }

@@ -35,9 +35,14 @@ public class NNDFS implements NDFS {
     public boolean ndfs() {
         for (Thread t: threads) {
             t.start();
+            try {
+                t.join();
+            }catch (InterruptedException e) {
+                return true;
+            }
         }
 
-        for (int i = 0; i < workers.length; i++) {
+        for(int i=0; i < workers.length; i++){
             if (workers[i].getResult())
                 return true;
         }
