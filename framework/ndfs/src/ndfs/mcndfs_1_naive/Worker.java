@@ -19,6 +19,7 @@ public class Worker implements Runnable {
 
     private final Graph graph;
     private final Colors colors = new Colors();
+    private final int threadnumber;
     private boolean result = false;
 
     private final Map<State,Boolean> pinkMap = new HashMap<State, Boolean>();
@@ -37,9 +38,10 @@ public class Worker implements Runnable {
      * @throws FileNotFoundException
      *             is thrown in case the file could not be read.
      */
-    public Worker(File promelaFile) throws FileNotFoundException {
+    public Worker(File promelaFile, int i) throws FileNotFoundException {
 
         this.graph = GraphFactory.createGraph(promelaFile);
+        this.threadnumber = i;
     }
 
     private void dfsRed(State s) throws CycleFoundException {
@@ -63,6 +65,7 @@ public class Worker implements Runnable {
 
         colors.color(s, Color.CYAN);
         for (State t : graph.post(s)) {
+            //System.out.println( "Thread "+ threadnumber +" state returned : " + s);
             if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(s)) ) {
                 dfsBlue(t);
             }
