@@ -41,7 +41,7 @@ public class NNDFS implements NDFS {
             try {
                 t.join();
             } catch (InterruptedException e) {
-                return true;
+            	
             }
         }
 

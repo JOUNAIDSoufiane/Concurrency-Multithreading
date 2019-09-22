@@ -1,7 +1,6 @@
 package ndfs.mcndfs_1_naive;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import graph.State;
 
@@ -10,7 +9,7 @@ import graph.State;
  */
 public class Colors {
 
-    private final Map<State, Color> map = new HashMap<State, Color>();
+    private final ConcurrentHashMap<State, Color> map = new ConcurrentHashMap<State, Color>();
 
     /**
      * Returns <code>true</code> if the specified state has the specified color,

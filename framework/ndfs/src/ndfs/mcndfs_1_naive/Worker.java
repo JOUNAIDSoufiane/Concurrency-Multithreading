@@ -11,9 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 /**
  * This is a straightforward implementation of Figure 1 of
  * <a href="http://www.cs.vu.nl/~tcs/cm/ndfs/laarman.pdf"> "the Laarman
@@ -29,7 +26,6 @@ public class Worker implements Runnable {
     private int nrThreads;
     private int nrWorker;
 
-    private ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     private final Map<State,Boolean> pinkMap = new HashMap<State, Boolean>();
 
@@ -58,21 +54,20 @@ public class Worker implements Runnable {
 //        System.out.println( "Thread "+ nrWorker +" current state in dfs red : " + s);
         pinkMap.put(s, true);
         //  Post permuation
-        List<State> list = graph.post(s);
-        for (int i = nrWorker; i < list.size(); i += nrThreads) {
+        for (State t : graph.post(s)) {
 //            System.out.println( "Thread "+ nrWorker +" state returned dfs red : " + list.get(i));
-            if (colors.hasColor(list.get(i), Color.CYAN)) {
+            if (colors.hasColor(t, Color.CYAN)) {
                 throw new CycleFoundException();
             } else if (pinkMap.get(s) == null && !SharedColors.getInstance().isRed(s) ) {
 //                System.out.println( "Thread "+ nrWorker +" initiating dfs red on succesor : " + list.get(i));
-                dfsRed(list.get(i));
+                dfsRed(t);
             }
         }
          if (s.isAccepting()){
-              readWriteLock.writeLock().lock();
-              StateCount.getInstance().countDecrement(s); // Critical section
-              readWriteLock.writeLock().unlock();
-              while (!StateCount.getInstance().isZero(s)) {}
+        	 synchronized(StateCount.getInstance()) {
+        		 StateCount.getInstance().countDecrement(s); // Critical section
+        	 }
+             while (!StateCount.getInstance().isZero(s)) {}
          }
 //         System.out.println( "Thread "+ nrWorker +" colored red state : " + s);
          SharedColors.getInstance().setRed(s);
@@ -81,21 +76,20 @@ public class Worker implements Runnable {
     }
 
     private void dfsBlue(State s) throws CycleFoundException {
-//        System.out.println( "Thread "+ nrWorker +" current state in dfs blue : " + s);
+       // System.out.println( "Thread "+ nrWorker +" current state in dfs blue : " + s);
         colors.color(s, Color.CYAN);
         //  Post permuation
-        List<State> list = graph.post(s);
-        for (int i = nrWorker; i < list.size(); i += nrThreads) { // i += nrThreads skips succesors on backtracking
-            if (colors.hasColor(list.get(i), Color.WHITE) && (!SharedColors.getInstance().isRed(s)) ) {
+        for (State t : graph.post(s)) { // i += nrThreads skips succesors on backtracking
+            if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(s)) ) {
 //                System.out.println( "Thread "+ nrWorker +" initiating dfs blue on succesor : " + list.get(i));
-                dfsBlue(list.get(i));
+                dfsBlue(t);
 //                System.out.println( "Thread "+ nrWorker +" backtracking from : " + list.get(i));
             }
         }
         if (s.isAccepting()) {
-            readWriteLock.writeLock().lock();
-            StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
-            readWriteLock.writeLock().unlock();
+        	synchronized(StateCount.getInstance()) {
+        		StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
+        	}
 //            System.out.println( "Thread "+ nrWorker +" initiating dfs red on " + s);
             dfsRed(s);
         }
@@ -103,7 +97,11 @@ public class Worker implements Runnable {
     }
 
     private void nndfs(State s) throws CycleFoundException {
-        dfsBlue(s);
+    	List<State> list = graph.post(s);
+    	if (nrWorker < list.size()) {					//SHITTY cause this only lets workers with low numbers proceed if fixed,
+	    	if(StateCount.count.get() < list.size())	//there'd be 2 operations on count which is fucked with multiple threads
+	    		dfsBlue(list.get(StateCount.count.getAndIncrement()));
+	    }
     }
 
     public void run() {
