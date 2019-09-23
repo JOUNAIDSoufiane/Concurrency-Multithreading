@@ -27,8 +27,6 @@ public class Worker implements Runnable {
 
     private boolean result = false;
 
-    private SharedLock slock = new SharedLock();
-
     private final Map<State,Boolean> pinkMap = new HashMap<State, Boolean>();
 
     // Throwing an exception is a convenient way to cut off the search in case a
@@ -61,16 +59,16 @@ public class Worker implements Runnable {
             }
         }
          if (s.isAccepting()){
-             slock.lock.lock();
+             SharedLock.lock.lock();
 
              StateCount.getInstance().countDecrement(s); // Critical section
-             slock.lock.unlock();
+             SharedLock.lock.unlock();
              while (!StateCount.getInstance().isZero(s)) {}
          }
-        slock.lock.lock();
+        SharedLock.lock.lock();
         SharedColors.getInstance().setRed(s);
         pinkMap.remove(s);
-        slock.lock.unlock();
+        SharedLock.lock.unlock();
     }
 
     private void dfsBlue(State s) throws CycleFoundException {
@@ -81,9 +79,9 @@ public class Worker implements Runnable {
             }
         }
         if (s.isAccepting()) {
-            slock.lock.lock();
+            SharedLock.lock.lock();
             StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
-            slock.lock.unlock();
+            SharedLock.lock.unlock();
             dfsRed(s);
         }
         colors.color(s, Color.BLUE);
