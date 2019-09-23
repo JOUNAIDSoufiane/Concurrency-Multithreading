@@ -98,10 +98,14 @@ public class Worker implements Runnable {
 
     private void nndfs(State s) throws CycleFoundException {
     	List<State> list = graph.post(s);
-    	if (nrWorker < list.size()) {					//SHITTY cause this only lets workers with low numbers proceed if fixed,
-	    	if(StateCount.count.get() < list.size())	//there'd be 2 operations on count which is fucked with multiple threads
-	    		dfsBlue(list.get(StateCount.count.getAndIncrement()));
-	    }
+    	
+    	//Gives each thread a successor of the initial node until there are no more successors
+		int i;
+		if(StateCount.count.get() >= list.size())
+			list = graph.post(list.get(list.size() - 1));
+    	while ((i = StateCount.count.getAndIncrement()) < list.size()) {
+    		dfsBlue(list.get(i));
+    	}
     }
 
     public void run() {
