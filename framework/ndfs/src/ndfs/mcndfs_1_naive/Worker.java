@@ -10,6 +10,10 @@ import graph.State;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.Collections;
+import java.util.Random;
+import java.util.List;
+
 /**
  * This is a straightforward implementation of Figure 1 of
  * <a href="http://www.cs.vu.nl/~tcs/cm/ndfs/laarman.pdf"> "the Laarman
@@ -20,7 +24,10 @@ public class Worker implements Runnable {
     private final Graph graph;
     private final Colors colors = new Colors();
     private final int threadnumber;
+
     private boolean result = false;
+
+    private SharedLock slock = new SharedLock();
 
     private final Map<State,Boolean> pinkMap = new HashMap<State, Boolean>();
 
@@ -46,35 +53,46 @@ public class Worker implements Runnable {
 
     private void dfsRed(State s) throws CycleFoundException {
         pinkMap.put(s, true);
-        for (State t : graph.post(s)) {
+        for (State t : perm(s)) {
             if (colors.hasColor(t, Color.CYAN)) {
                 throw new CycleFoundException();
-            } else if (pinkMap.get(s) == null && !SharedColors.getInstance().isRed(s) ) {
+            } else if (pinkMap.get(t) == null && !SharedColors.getInstance().isRed(t) ) {
                 dfsRed(t);
             }
         }
          if (s.isAccepting()){
-              StateCount.getInstance().countDecrement(s); // Critical section
-              while (!StateCount.getInstance().isZero(s)) {}
+             slock.lock.lock();
+
+             StateCount.getInstance().countDecrement(s); // Critical section
+             slock.lock.unlock();
+             while (!StateCount.getInstance().isZero(s)) {}
          }
+        slock.lock.lock();
         SharedColors.getInstance().setRed(s);
         pinkMap.remove(s);
+        slock.lock.unlock();
     }
 
     private void dfsBlue(State s) throws CycleFoundException {
-
         colors.color(s, Color.CYAN);
-        for (State t : graph.post(s)) {
-            //System.out.println( "Thread "+ threadnumber +" state returned : " + s);
-            if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(s)) ) {
+        for (State t : perm(s)) {
+            if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(t)) ) {
                 dfsBlue(t);
             }
         }
         if (s.isAccepting()) {
+            slock.lock.lock();
             StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
+            slock.lock.unlock();
             dfsRed(s);
         }
         colors.color(s, Color.BLUE);
+    }
+
+    private List<State> perm(State s) { // permutation function randomizes the order of succesors based on the thread number as a seed
+        List<State> permutated = graph.post(s);
+        Collections.shuffle(permutated, new Random(threadnumber));
+        return permutated;
     }
 
     private void nndfs(State s) throws CycleFoundException {
