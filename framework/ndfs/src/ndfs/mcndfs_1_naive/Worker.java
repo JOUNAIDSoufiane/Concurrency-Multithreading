@@ -12,6 +12,7 @@ import java.util.Map;
 
 import java.util.Collections;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ import java.util.List;
  * <a href="http://www.cs.vu.nl/~tcs/cm/ndfs/laarman.pdf"> "the Laarman
  * paper"</a>.
  */
-public class Worker implements Runnable {
+public class Worker implements Runnable, Callable {
 
     private final Graph graph;
     private final Colors colors = new Colors();
@@ -97,15 +98,28 @@ public class Worker implements Runnable {
         dfsBlue(s);
     }
 
+    
+    
+    //TODO Can be removed along with Runnable implementation of Worker
     public void run() {
-        try {
-            nndfs(graph.getInitialState());
-        } catch (CycleFoundException e) {
-            result = true;
-        }
+//        try {
+//            nndfs(graph.getInitialState());
+//        } catch (CycleFoundException e) {
+//            result = true;
+//        }
     }
 
     public boolean getResult() {
         return result;
     }
+
+	@Override
+	public Worker call() throws Exception {
+		try {
+            nndfs(graph.getInitialState());
+        } catch (CycleFoundException e) {
+            result = true;
+        }
+		return this;
+	}
 }
