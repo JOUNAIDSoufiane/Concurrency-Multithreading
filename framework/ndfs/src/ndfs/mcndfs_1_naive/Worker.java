@@ -20,7 +20,7 @@ import java.util.List;
  * <a href="http://www.cs.vu.nl/~tcs/cm/ndfs/laarman.pdf"> "the Laarman
  * paper"</a>.
  */
-public class Worker implements Runnable, Callable {
+public class Worker implements Runnable, Callable<Worker> {
 
     private final Graph graph;
     private final Colors colors = new Colors();
@@ -68,8 +68,8 @@ public class Worker implements Runnable, Callable {
          }
         SharedLock.lock.lock();
         SharedColors.getInstance().setRed(s);
-        pinkMap.remove(s);
         SharedLock.lock.unlock();
+        pinkMap.remove(s);
     }
 
     private void dfsBlue(State s) throws CycleFoundException {
@@ -95,7 +95,19 @@ public class Worker implements Runnable, Callable {
     }
 
     private void nndfs(State s) throws CycleFoundException {
-        dfsBlue(s);
+    	
+    	List<State> list = graph.post(s);
+    	
+    	//Gives each thread a successor of the initial node until there are no more successors 
+    	//FIXME Sends all threads to last successor's successors if all successors of the initial state are gone
+		int i;
+		synchronized(StateCount.getInstance()) {
+			if(StateCount.count.get() >= list.size())
+				list = graph.post(list.get(list.size() - 1));
+			if ((i = StateCount.count.getAndIncrement()) < list.size()) {
+	    		dfsBlue(list.get(i));
+	    	}
+		}
     }
 
     
