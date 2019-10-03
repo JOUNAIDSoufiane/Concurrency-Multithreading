@@ -101,12 +101,10 @@ public class Worker implements Runnable, Callable<Worker> {
     	//Gives each thread a successor of the initial node until there are no more successors 
     	//FIXME Sends all threads to last successor's successors if all successors of the initial state are gone
 		int i;
-		synchronized(StateCount.getInstance()) {
-			if(StateCount.count.get() >= list.size())
-				list = graph.post(list.get(list.size() - 1));
-			if ((i = StateCount.count.getAndIncrement()) < list.size()) {
-	    		dfsBlue(list.get(i));
-	    	}
+		if(StateCount.count.get() >= list.size())
+			list = graph.post(list.get(list.size() - 1));
+		if ((i = StateCount.count.getAndIncrement()) < list.size()) {
+    		dfsBlue(list.get(i));
 		}
     }
 
