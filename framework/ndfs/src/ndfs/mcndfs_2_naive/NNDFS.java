@@ -1,4 +1,4 @@
-package ndfs.mcndfs_1_naive;
+package ndfs.mcndfs_2_naive;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 import ndfs.NDFS;
 
 /**
@@ -17,7 +18,7 @@ public class NNDFS implements NDFS {
 
     private final Worker[] workers;
     ExecutorService executorService;
-    CompletionService<Worker> executerCompletionService;
+    CompletionService<Worker> executorCompletionService;
     
 
     /**
@@ -30,13 +31,12 @@ public class NNDFS implements NDFS {
      */
     public NNDFS(File promelaFile, int nrWorkers) throws FileNotFoundException {
     	executorService = Executors.newFixedThreadPool(nrWorkers);
-    	executerCompletionService = new ExecutorCompletionService<Worker>(executorService);
+    	executorCompletionService = new ExecutorCompletionService<Worker>(executorService);
    	 
         workers = new Worker[nrWorkers];
         for (int i = 0; i < nrWorkers; i++) {
             workers[i] = new Worker(promelaFile,i);
-            executerCompletionService.submit(workers[i]);
-            //threads[i] = new Thread(workers[i]);
+            executorCompletionService.submit(workers[i]);
         }
     	
     }
@@ -47,10 +47,10 @@ public class NNDFS implements NDFS {
             try {
                 Boolean result = false;
 				try {
-					result = executerCompletionService.take().get().getResult();
+					result = executorCompletionService.take().get().getResult();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					//XXX For now if threads crash or get interrupted program exits
+					return result;
 				}
                 if (result) {
                 	//Will interrupt all threads still running and shut down

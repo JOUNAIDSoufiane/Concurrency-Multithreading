@@ -1,4 +1,4 @@
-package ndfs.mcndfs_1_naive;
+package ndfs.mcndfs_2_naive;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import graph.Graph;
 import graph.GraphFactory;
 import graph.State;
-import ndfs.mcndfs_2_naive.StateCount;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,19 +55,13 @@ public class Worker implements Callable<Worker> {
         for (State t : perm(s)) {
             if (colors.hasColor(t, Color.CYAN)) {
                 throw new CycleFoundException();
-            } else {
-                SharedLock.lock.lock();
-            	if (pinkMap.get(t) == null && !SharedColors.getInstance().isRed(t) ) {
-	                dfsRed(t);
-	            }
-                SharedLock.lock.unlock();
+            } else if (pinkMap.get(t) == null && !SharedColors.getInstance().isRed(t) ) {
+                dfsRed(t);
             }
         }
-        if (s.isAccepting()){
-        	SharedLock.lock.lock();
-            StateCount.getInstance().countDecrement(s); // Critical section
-            SharedLock.lock.unlock();
-            synchronized(StateCount.getInstance()) {
+		if (s.isAccepting()){
+			StateCount.getInstance().countDecrement(s); // Critical section
+			synchronized(StateCount.getInstance()) {
 				if (!StateCount.getInstance().isZero(s)) {
 					try {
 						StateCount.getInstance().wait();
@@ -79,11 +72,9 @@ public class Worker implements Callable<Worker> {
 				} else 
 					StateCount.getInstance().notifyAll();
 			}
-        }
-        SharedLock.lock.lock();
-        SharedColors.getInstance().setRed(s);
-        SharedLock.lock.unlock();
-        pinkMap.remove(s);
+		}
+		SharedColors.getInstance().setRed(s);
+		pinkMap.remove(s);
     }
 
     private void dfsBlue(State s) throws CycleFoundException {
@@ -94,15 +85,13 @@ public class Worker implements Callable<Worker> {
             }
         }
         if (s.isAccepting()) {
-            SharedLock.lock.lock();
             StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
-            SharedLock.lock.unlock();
             dfsRed(s);
         }
         colors.color(s, Color.BLUE);
     }
 
-    private List<State> perm(State s) { // permutation function randomizes the order of succesors based on the thread number as a seed
+    private List<State> perm(State s) { // permutation function randomizes the order of successors based on the thread number as a seed
         List<State> permutated = graph.post(s);
         Collections.shuffle(permutated, new Random(threadnumber));
         return permutated;
@@ -124,7 +113,7 @@ public class Worker implements Callable<Worker> {
     		dfsBlue(list.get(i));
 		}
     }
-
+    
     public boolean getResult() {
         return result;
     }

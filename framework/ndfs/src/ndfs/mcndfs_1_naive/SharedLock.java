@@ -4,6 +4,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class SharedLock extends ReentrantLock{
 
-    public static ReentrantLock lock = new ReentrantLock();
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public static ReentrantLock lock = new ReentrantLock();
 
 }

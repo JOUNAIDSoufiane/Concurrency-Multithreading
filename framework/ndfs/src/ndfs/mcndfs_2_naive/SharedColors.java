@@ -1,14 +1,13 @@
-package ndfs.mcndfs_1_naive;
+package ndfs.mcndfs_2_naive;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import graph.State;
 
 public class SharedColors {
 
     private static SharedColors singleInstance = new SharedColors();
-    private static final Map<State, Boolean> map = new HashMap<State, Boolean>();
+    private static final ConcurrentHashMap<State, Boolean> map = new ConcurrentHashMap<State, Boolean>();
 
     public static SharedColors getInstance(){
         return singleInstance;
