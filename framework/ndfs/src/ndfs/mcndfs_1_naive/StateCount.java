@@ -6,10 +6,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import graph.State;
 
-public class StateCount{ // Singleton class, to be used as a shared object
+public class StateCount { // Singleton class, to be used as a shared object
 
     private static StateCount singleInstance = new StateCount();
-    private static final Map<State, AtomicInteger> map = new HashMap<State, AtomicInteger>();
+    private static final Map<State, Counter> map = new HashMap<State, Counter>();
     public static AtomicInteger count = new AtomicInteger(0);
 
     public static StateCount getInstance(){
@@ -19,9 +19,9 @@ public class StateCount{ // Singleton class, to be used as a shared object
 
     public void countIncrement(State s){
         if (map.get(s) == null) {
-                map.put(s, new AtomicInteger(1));
+            map.put(s, new Counter(1));
         } else {
-            map.put(s, new AtomicInteger(map.get(s).incrementAndGet()));
+            map.put(s, map.get(s).incrementAndGet());
         }
     }
 
@@ -29,7 +29,7 @@ public class StateCount{ // Singleton class, to be used as a shared object
         if (map.get(s).get() == 1) {
             map.remove(s);
         } else {
-            map.put(s, new AtomicInteger(map.get(s).decrementAndGet()));
+            map.put(s, map.get(s).decrementAndGet());
         }
     }
 
