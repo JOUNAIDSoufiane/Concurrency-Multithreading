@@ -1,0 +1,21 @@
+- You shouldn't use busy waiting to wait for the counter to go to 0. Try using a wait/notify scheme instead.
+
+- Line 70 in Worker.java: Setting pink doesn't have to be inside of the lock; pink is not a shared resource.
+
+- They way your thread management is implemented, it will always have to wait for all threads to finish before
+it can get any results. .join() waits for the thread to finish, so if the last thread has found an answer,
+the first threads will still go through the entire graph instead of being stopped. You should implement this
+in a way that as soon as one of the threads finds an answer, all other threads receive an interrupt to instruct 
+them to stop. Have a look at the ExecutorCompletionService, it manages this nicely. Alternatively, you can make 
+sure that as soon as a worker finds a result, all other threads are interrupted. This way you can still use .join(), 
+but the answer will still be found as soon as one of the threads finds it.
+
+- At line 57 of Worker.java you are checking a shared resource, but it is not locked. Make sure all reads and
+writes to shared resources are locked.
+
+- You shouldn't use Integer as the counter because it is immutable.
+
+- The function isRed in SharedColors could be refactored to simply: return (map.get(s) != null);
+
+- The explanation in your report is good; just make sure to describe how you implement the await (in a non busy waiting way),
+and maybe touch on the thread managment a bit.
