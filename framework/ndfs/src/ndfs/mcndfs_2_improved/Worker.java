@@ -1,4 +1,4 @@
-package ndfs.mcndfs_2_naive;
+package ndfs.mcndfs_2_improved;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -50,7 +50,7 @@ public class Worker implements Callable<Worker> {
         this.threadnumber = i;
     }
 
-    private void dfsRed(State s) throws CycleFoundException {
+    private void dfsRed(State s) throws CycleFoundException, InterruptedException {
         pinkMap.put(s, true);
         for (State t : perm(s)) {
             if (colors.hasColor(t, Color.CYAN)) {
@@ -62,14 +62,9 @@ public class Worker implements Callable<Worker> {
 		if (s.isAccepting()){
 			StateCount.getInstance().countDecrement(s); // Critical section
 			synchronized(StateCount.getInstance()) {
-				if (!StateCount.getInstance().isZero(s)) {
-					try {
-						StateCount.getInstance().wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else 
+				if (!StateCount.getInstance().isZero(s))
+					StateCount.getInstance().wait();
+				else 
 					StateCount.getInstance().notifyAll();
 			}
 		}
@@ -77,7 +72,7 @@ public class Worker implements Callable<Worker> {
 		pinkMap.remove(s);
     }
 
-    private void dfsBlue(State s) throws CycleFoundException {
+    private void dfsBlue(State s) throws CycleFoundException, InterruptedException {
         colors.color(s, Color.CYAN);
         for (State t : perm(s)) {
             if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(t)) ) {
@@ -93,25 +88,12 @@ public class Worker implements Callable<Worker> {
 
     private List<State> perm(State s) { // permutation function randomizes the order of successors based on the thread number as a seed
         List<State> permutated = graph.post(s);
-        Collections.shuffle(permutated, new Random(threadnumber));
+        Collections.shuffle(permutated, new Random(threadnumber * s.hashCode()));
         return permutated;
     }
 
-    private void nndfs(State s) throws CycleFoundException {
-    	
-    	List<State> list = graph.post(s);
-    	
-    	//Gives each thread a successor of the initial node until there are no more successors 
-    	//FIXME Sends all threads to last successor's successors if all successors of the initial state are gone
-    	//XXX Sometimes parks all threads on cycle-min
-		int i;
-		if(StateCount.count.get() >= list.size()) {
-			list = graph.post(list.get(list.size() - 1));
-			StateCount.count.getAndSet(0);
-		}
-		while ((i = StateCount.count.getAndIncrement()) < list.size()) {
-    		dfsBlue(list.get(i));
-		}
+    private void nndfs(State s) throws CycleFoundException, InterruptedException {
+    	dfsBlue(s);
     }
     
     public boolean getResult() {

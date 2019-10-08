@@ -1,7 +1,6 @@
-package ndfs.mcndfs_2_naive;
+package ndfs.mcndfs_2_improved;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import graph.State;
 
@@ -9,7 +8,6 @@ public class StateCount{ // Singleton class, to be used as a shared object
 
     private static StateCount singleInstance = new StateCount();
     private static final ConcurrentHashMap<State, Counter> map = new ConcurrentHashMap<State, Counter>();
-    public static AtomicInteger count = new AtomicInteger(0);
 
     public static StateCount getInstance(){
         return singleInstance;

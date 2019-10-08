@@ -1,4 +1,4 @@
-package ndfs.mcndfs_2_naive;
+package ndfs.mcndfs_2_improved;
 
 import java.util.HashMap;
 import java.util.Map;

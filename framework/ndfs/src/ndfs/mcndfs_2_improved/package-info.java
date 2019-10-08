@@ -6,4 +6,4 @@
  *
  * This package must be modified to implement Alg. 2 of the Laarman paper.
  */
-package ndfs.mcndfs_2_naive;
+package ndfs.mcndfs_2_improved;

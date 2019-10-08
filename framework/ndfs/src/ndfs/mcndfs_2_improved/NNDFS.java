@@ -1,4 +1,4 @@
-package ndfs.mcndfs_2_naive;
+package ndfs.mcndfs_2_improved;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -48,10 +48,7 @@ public class NNDFS implements NDFS {
                 Boolean result = false;
 				try {
 					result = executorCompletionService.take().get().getResult();
-				} catch (InterruptedException e) {
-					//XXX For now if threads crash or get interrupted program exits
-					return result;
-				}
+				} catch (InterruptedException ignore) {}
                 if (result) {
                 	//Will interrupt all threads still running and shut down
                 	executorService.shutdownNow();

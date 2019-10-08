@@ -36,7 +36,6 @@ public class NNDFS implements NDFS {
         for (int i = 0; i < nrWorkers; i++) {
             workers[i] = new Worker(promelaFile,i);
             executerCompletionService.submit(workers[i]);
-            //threads[i] = new Thread(workers[i]);
         }
     	
     }

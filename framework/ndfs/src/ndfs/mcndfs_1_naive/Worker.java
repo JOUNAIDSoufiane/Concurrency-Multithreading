@@ -6,7 +6,7 @@ import java.io.FileNotFoundException;
 import graph.Graph;
 import graph.GraphFactory;
 import graph.State;
-import ndfs.mcndfs_2_naive.StateCount;
+import ndfs.mcndfs_2_improved.StateCount;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +51,7 @@ public class Worker implements Callable<Worker> {
         this.threadnumber = i;
     }
 
-    private void dfsRed(State s) throws CycleFoundException {
+    private void dfsRed(State s) throws CycleFoundException, InterruptedException {
         pinkMap.put(s, true);
         for (State t : perm(s)) {
             if (colors.hasColor(t, Color.CYAN)) {
@@ -69,14 +69,9 @@ public class Worker implements Callable<Worker> {
             StateCount.getInstance().countDecrement(s); // Critical section
             SharedLock.lock.unlock();
             synchronized(StateCount.getInstance()) {
-				if (!StateCount.getInstance().isZero(s)) {
-					try {
-						StateCount.getInstance().wait();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else 
+				if (!StateCount.getInstance().isZero(s))
+					StateCount.getInstance().wait();
+				else 
 					StateCount.getInstance().notifyAll();
 			}
         }
@@ -86,7 +81,7 @@ public class Worker implements Callable<Worker> {
         pinkMap.remove(s);
     }
 
-    private void dfsBlue(State s) throws CycleFoundException {
+    private void dfsBlue(State s) throws CycleFoundException, InterruptedException {
         colors.color(s, Color.CYAN);
         for (State t : perm(s)) {
             if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(t)) ) {
@@ -108,21 +103,8 @@ public class Worker implements Callable<Worker> {
         return permutated;
     }
 
-    private void nndfs(State s) throws CycleFoundException {
-    	
-    	List<State> list = graph.post(s);
-    	
-    	//Gives each thread a successor of the initial node until there are no more successors 
-    	//FIXME Sends all threads to last successor's successors if all successors of the initial state are gone
-    	//XXX Sometimes parks all threads on cycle-min
-		int i;
-		if(StateCount.count.get() >= list.size()) {
-			list = graph.post(list.get(list.size() - 1));
-			StateCount.count.getAndSet(0);
-		}
-		while ((i = StateCount.count.getAndIncrement()) < list.size()) {
-    		dfsBlue(list.get(i));
-		}
+    private void nndfs(State s) throws CycleFoundException, InterruptedException {
+    	dfsBlue(s);
     }
 
     public boolean getResult() {
