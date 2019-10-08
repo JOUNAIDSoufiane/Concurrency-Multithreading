@@ -63,7 +63,7 @@ public class Worker implements Callable<Worker> {
 			StateCount.getInstance().countDecrement(s); // Critical section
 			synchronized(StateCount.getInstance()) {
 				if (!StateCount.getInstance().isZero(s))
-					StateCount.getInstance().wait();
+					StateCount.getInstance().wait(200);
 				else 
 					StateCount.getInstance().notifyAll();
 			}

@@ -1,0 +1,52 @@
+First round of testing
+
+accept cycle 
+seq : 1ms
+1_naive : 1 ms (10 threads)
+2_improved : 1 ms (10 threads)
+
+simple-loop
+seq : 1 to 2ms 
+1_naive : (10 threads)
+2_improved : 1ms (>10 threads)
+
+bench-wide: (weird behavior)
+2_improved :  ~35000ms (1 thread)
+2_improved :  ~52000ms (2 threads)
+2_improved : takes very long(10 threads)
+2_improved : takes very long(>10 threads)
+
+bench-deep
+2_improved : ~5000ms (2 threads)
+2_improved : ~11000ms (10 threads)
+2_improved : >20000ms (>10 threads)
+
+bintree
+seq : ~4100 ms
+1_naive : >8000ms (>2 threads)
+2_improved : ~3500ms (>10 threads)
+
+bintree-loop
+seq : 5231 ms
+1_naive : >10000 ms (>2 threads)
+2_improved : ~3500 ms (10 threads)
+
+bintree cycle
+seq : 2 ms
+1_naive : 0 to 2 ms (>10 threads)
+2_improved : 0 to 1ms (>10 threads)
+
+bintree converge
+seq : 5565 ms
+1_naive : 10639 s (2 threads)
+2_improved : 3609 ms (10/20 threads)
+
+bintree cycle max
+seq : 2 ms
+1_naive : 1 to 3 ms (10 threads)
+2_improved : 0 to 1ms (10 threads)
+
+bintree cycle min
+seq : 3982 ms
+1_naive : 9575 ms (2 threads)
+2_improved :  1000< ms (20 threads)
