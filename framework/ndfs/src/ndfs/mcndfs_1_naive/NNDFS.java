@@ -47,10 +47,7 @@ public class NNDFS implements NDFS {
                 Boolean result = false;
 				try {
 					result = executerCompletionService.take().get().getResult();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				} catch (InterruptedException ignore) {}
                 if (result) {
                 	//Will interrupt all threads still running and shut down
                 	executorService.shutdownNow();

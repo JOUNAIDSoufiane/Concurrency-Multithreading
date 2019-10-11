@@ -60,10 +60,10 @@ public class Worker implements Callable<Worker> {
             }
         }
 		if (s.isAccepting()){
-			StateCount.getInstance().countDecrement(s); // Critical section
+			StateCount.getInstance().countDecrement(s);
 			synchronized(StateCount.getInstance()) {
 				if (!StateCount.getInstance().isZero(s))
-					StateCount.getInstance().wait(200);
+					StateCount.getInstance().wait();
 				else 
 					StateCount.getInstance().notifyAll();
 			}

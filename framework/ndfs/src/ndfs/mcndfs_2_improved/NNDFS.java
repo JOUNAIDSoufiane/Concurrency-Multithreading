@@ -49,6 +49,8 @@ public class NNDFS implements NDFS {
 				try {
 					result = executorCompletionService.take().get().getResult();
 				} catch (InterruptedException ignore) {}
+				//When one thread finds a cycle, all others are interrupted on executorService shutdown 
+				//Therefore all interrupted Exceptions are ignored
                 if (result) {
                 	//Will interrupt all threads still running and shut down
                 	executorService.shutdownNow();
