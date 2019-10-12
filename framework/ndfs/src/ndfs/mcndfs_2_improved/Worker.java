@@ -88,7 +88,7 @@ public class Worker implements Callable<Worker> {
 
     private List<State> perm(State s) { // permutation function randomizes the order of successors based on the thread number as a seed
         List<State> permutated = graph.post(s);
-        Collections.shuffle(permutated, new Random(threadnumber * s.hashCode()));
+        Collections.shuffle(permutated, new Random(threadnumber * s.hashCode())); 
         return permutated;
     }
 
