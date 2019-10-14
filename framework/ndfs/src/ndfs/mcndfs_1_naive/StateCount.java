@@ -3,12 +3,14 @@ package ndfs.mcndfs_1_naive;
 import java.util.HashMap;
 import java.util.Map;
 
+
 import graph.State;
 
 public class StateCount { // Singleton class, to be used as a shared object
 
     private static StateCount singleInstance = new StateCount();
     private static final Map<State, Counter> map = new HashMap<State, Counter>();
+
 
     public static StateCount getInstance(){
         return singleInstance;
