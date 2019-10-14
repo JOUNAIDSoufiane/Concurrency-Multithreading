@@ -8,3 +8,11 @@ framework/.idea/modules.xml
 framework/.idea/framework.iml
 
 framework/.idea/$PRODUCT_WORKSPACE_FILE$
+
+framework/ndfs/build/
+
+framework/ndfs/javadoc/
+
+framework/ndfs/.classpath
+
+framework/ndfs/.project

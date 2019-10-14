@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="framework/ndfs/src"/>
+	<classpathentry kind="lib" path="framework/ndfs/build/jar/ndfs.jar"/>
+	<classpathentry kind="lib" path="framework/ndfs/lib/graph.jar"/>
+	<classpathentry kind="lib" path="framework/ndfs/lib/spinja.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="framework/ndfs/build/classes"/>
+</classpath>

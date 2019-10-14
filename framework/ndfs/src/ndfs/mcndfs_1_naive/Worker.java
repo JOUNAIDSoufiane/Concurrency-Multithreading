@@ -6,26 +6,28 @@ import java.io.FileNotFoundException;
 import graph.Graph;
 import graph.GraphFactory;
 import graph.State;
+import ndfs.mcndfs_2_improved.StateCount;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+
+import java.util.Collections;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.List;
 
 /**
  * This is a straightforward implementation of Figure 1 of
  * <a href="http://www.cs.vu.nl/~tcs/cm/ndfs/laarman.pdf"> "the Laarman
  * paper"</a>.
  */
-public class Worker implements Runnable {
+public class Worker implements Callable<Worker> {
 
     private final Graph graph;
     private final Colors colors = new Colors();
+    private final int threadnumber;
 
     private boolean result = false;
-
-    private int nrThreads;
-    private int nrWorker;
-
 
     private final Map<State,Boolean> pinkMap = new HashMap<State, Boolean>();
 
@@ -43,80 +45,79 @@ public class Worker implements Runnable {
      * @throws FileNotFoundException
      *             is thrown in case the file could not be read.
      */
-    public Worker(File promelaFile, int nrThreads, int nrWorker) throws FileNotFoundException {
+    public Worker(File promelaFile, int i) throws FileNotFoundException {
 
         this.graph = GraphFactory.createGraph(promelaFile);
-        this.nrThreads = nrThreads;
-        this.nrWorker = nrWorker;
+        this.threadnumber = i;
     }
 
-    private void dfsRed(State s) throws CycleFoundException {
-//        System.out.println( "Thread "+ nrWorker +" current state in dfs red : " + s);
+    private void dfsRed(State s) throws CycleFoundException, InterruptedException {
         pinkMap.put(s, true);
-        //  Post permuation
-        for (State t : graph.post(s)) {
-//            System.out.println( "Thread "+ nrWorker +" state returned dfs red : " + list.get(i));
+        for (State t : perm(s)) {
             if (colors.hasColor(t, Color.CYAN)) {
                 throw new CycleFoundException();
-            } else if (pinkMap.get(s) == null && !SharedColors.getInstance().isRed(s) ) {
-//                System.out.println( "Thread "+ nrWorker +" initiating dfs red on succesor : " + list.get(i));
-                dfsRed(t);
+            } else {
+                SharedLock.lock.lock();
+            	if (pinkMap.get(t) == null && !SharedColors.getInstance().isRed(t) ) {
+	                dfsRed(t);
+	            }
+                SharedLock.lock.unlock();
             }
         }
-         if (s.isAccepting()){
-        	 synchronized(StateCount.getInstance()) {
-        		 StateCount.getInstance().countDecrement(s); // Critical section
-        	 }
-             while (!StateCount.getInstance().isZero(s)) {}
-         }
-//         System.out.println( "Thread "+ nrWorker +" colored red state : " + s);
-         SharedColors.getInstance().setRed(s);
-         pinkMap.remove(s);
-//         System.out.println( "Thread "+ nrWorker +" leaving dfs red from " + s);
+        if (s.isAccepting()){
+        	SharedLock.lock.lock();
+            StateCount.getInstance().countDecrement(s); // Critical section
+            SharedLock.lock.unlock();
+            synchronized(StateCount.getInstance()) {
+				if (!StateCount.getInstance().isZero(s))
+					StateCount.getInstance().wait();
+				else 
+					StateCount.getInstance().notifyAll();
+			}
+        }
+        SharedLock.lock.lock();
+        SharedColors.getInstance().setRed(s);
+        SharedLock.lock.unlock();
+        pinkMap.remove(s);
     }
 
-    private void dfsBlue(State s) throws CycleFoundException {
-       // System.out.println( "Thread "+ nrWorker +" current state in dfs blue : " + s);
+    private void dfsBlue(State s) throws CycleFoundException, InterruptedException {
         colors.color(s, Color.CYAN);
-        //  Post permuation
-        for (State t : graph.post(s)) { // i += nrThreads skips succesors on backtracking
-            if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(s)) ) {
-//                System.out.println( "Thread "+ nrWorker +" initiating dfs blue on succesor : " + list.get(i));
+        for (State t : perm(s)) {
+            if (colors.hasColor(t, Color.WHITE) && (!SharedColors.getInstance().isRed(t)) ) {
                 dfsBlue(t);
-//                System.out.println( "Thread "+ nrWorker +" backtracking from : " + list.get(i));
             }
         }
         if (s.isAccepting()) {
-        	synchronized(StateCount.getInstance()) {
-        		StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
-        	}
-//            System.out.println( "Thread "+ nrWorker +" initiating dfs red on " + s);
+            SharedLock.lock.lock();
+            StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
+            SharedLock.lock.unlock();
             dfsRed(s);
         }
         colors.color(s, Color.BLUE);
     }
 
-    private void nndfs(State s) throws CycleFoundException {
-    	List<State> list = graph.post(s);
-    	
-    	//Gives each thread a successor of the initial node until there are no more successors
-		int i;
-		if(StateCount.count.get() >= list.size())
-			list = graph.post(list.get(list.size() - 1));
-    	while ((i = StateCount.count.getAndIncrement()) < list.size()) {
-    		dfsBlue(list.get(i));
-    	}
+    private List<State> perm(State s) { // permutation function randomizes the order of succesors based on the thread number as a seed
+        List<State> permutated = graph.post(s);
+        Collections.shuffle(permutated, new Random(threadnumber));
+        return permutated;
     }
 
-    public void run() {
-        try {
-            nndfs(graph.getInitialState());
-        } catch (CycleFoundException e) {
-            result = true;
-        }
+    private void nndfs(State s) throws CycleFoundException, InterruptedException {
+    	dfsBlue(s);
     }
 
     public boolean getResult() {
         return result;
     }
+
+	@Override
+	public Worker call() throws Exception {
+		try {
+            nndfs(graph.getInitialState());
+        } catch (CycleFoundException e) {
+            result = true;
+        }
+		return this;
+	}
 }
