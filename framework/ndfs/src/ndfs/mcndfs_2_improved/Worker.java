@@ -80,13 +80,13 @@ public class Worker implements Callable<Worker> {
             }
         }
         if (s.isAccepting()) {
-            StateCount.getInstance().countIncrement(s); // CS : needs to be protected from concurrent access
+            StateCount.getInstance().countIncrement(s); 
             dfsRed(s);
         }
         colors.color(s, Color.BLUE);
     }
 
-    private List<State> perm(State s) { // permutation function randomizes the order of successors based on the thread number as a seed
+    private List<State> perm(State s) { // permutation function randomizes the order of successors based on a personalized seed
         List<State> permutated = graph.post(s);
         Collections.shuffle(permutated, new Random(threadnumber * s.hashCode())); 
         return permutated;
